@@ -10,11 +10,12 @@ provider "azurerm" {
   tenant_id = "${var.tenant_id}"
 }
 
+#Create consul cluster
 module "Consul_Servers"{
   source = "./Modules/Servers"
 
   resource_group = "${var.resource_group}"
   location = "${var.location}"
   public_key = "${var.public_key}"
-  
+ 
 }

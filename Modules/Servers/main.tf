@@ -3,6 +3,8 @@
 terraform {
   required_version = ">= 0.11.7"
 }
+
+#create resource group
 resource "azurerm_resource_group" "Terraform_Demo_RG" {
   name= "${var.resource_group}"
   location = "${var.location}"
@@ -25,7 +27,7 @@ resource "azurerm_subnet" "Terraform_Demo_SN"{
   address_prefix = "10.0.2.0/24"
 }
 
-#Create Public IP address
+#Create Public IP addresses
 resource "azurerm_public_ip" "Terraform_Demo_IP" {
   name = "TerraformDemoPublicIP"
   location = "${var.location}"
@@ -55,16 +57,41 @@ resource "azurerm_network_security_group" "Terraform_Demo_NSG" {
   resource_group_name = "${azurerm_resource_group.Terraform_Demo_RG.name}"
 
   security_rule {
-    name = "security"
+    name = "ssh"
     priority = 101
     direction = "Inbound"
     access = "Allow"
     protocol = "Tcp"
     source_port_range = "*"
-    destination_port_range = "*"
+    destination_port_range = "22"
     source_address_prefix = "*"
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name = "consul"
+    priority = 102
+    direction = "Inbound"
+    access = "Allow"
+    protocol = "Tcp"
+    source_port_range = "*"
+    destination_port_range = "8300"
+    source_address_prefix = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name = "consul1"
+    priority = 103
+    direction = "Inbound"
+    access = "Allow"
+    protocol = "Tcp"
+    source_port_range = "*"
+    destination_port_range = "8500"
+    source_address_prefix = "*"
+    destination_address_prefix = "*"
+  }
+
 }
 
 #Create virtual network interface card
@@ -117,16 +144,17 @@ resource "random_id" "randomId" {
     byte_length = 8
 }
 
+#Create Storage Account
 resource "azurerm_storage_account" "Terraform_Demo_SA" {
   name = "diag${random_id.randomId.hex}"
   resource_group_name = "${azurerm_resource_group.Terraform_Demo_RG.name}"
   location = "${var.location}"
   account_replication_type = "LRS"
   account_tier = "Standard"
-}#Create virtual machine
 
+}#Create virtual machines
 resource "azurerm_virtual_machine" "Terraform_Server" {
-  name = "Consul-Server-VM"
+  name = "Consul-Server-1"
   location = "${var.location}"
   resource_group_name = "${azurerm_resource_group.Terraform_Demo_RG.name}"
   network_interface_ids = ["${azurerm_network_interface.Terraform_Demo_NI.id}"]
@@ -166,7 +194,6 @@ resource "azurerm_virtual_machine" "Terraform_Server" {
     
     connection {
       user = "bernardogza"
-      //private_key = "/home/bernardogza/.ssh/"
     }
 
     provisioner "remote-exec" {
@@ -225,7 +252,6 @@ resource "azurerm_virtual_machine" "Terraform_Server_2" {
     
     connection {
       user = "bernardogza"
-      //private_key = "/home/bernardogza/.ssh/"
     }
 
     provisioner "remote-exec" {
@@ -284,7 +310,6 @@ resource "azurerm_virtual_machine" "Terraform_Client" {
     
     connection {
       user = "bernardogza"
-      //private_key = "/home/bernardogza/.ssh/"
     }
 
     provisioner "remote-exec" {
